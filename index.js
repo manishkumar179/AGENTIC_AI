@@ -31,9 +31,23 @@ import rl from "readline/promises";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { chunkArray } from "@langchain/core/utils/chunk_array";
 import * as z from 'zod' 
+import fs from 'fs/promises'
 
-import { HumanMessage, AIMessage } from "langchain";
+import { HumanMessage, AIMessage , tool , ToolMessage, createAgent } from "langchain";
+import { da } from "zod/locales";
 
+const getMemoryTool = tool(
+  async ({}) =>{
+    const data = await fs.readFile("./profile.md" , "utf-8")
+    return data
+  },
+
+  {
+    name:"getMemory",
+    description: "Get the memory of the current user.",
+    schema: z.object({})
+  }
+)
 
 const readline = rl.createInterface({
     input:process.stdin,
@@ -46,24 +60,25 @@ const model = new ChatMistralAI({
   apiKey: process.env.MISTRAL_API_KEY,
 });
 
-const message = []
+const agent = createAgent({
+  model,
+  tools:[getMemoryTool]
+})
+
+const messages = []
 
 while (true) {
 
   const prompt = await readline.question("Enter your prompt:- ");
-  message.push(new HumanMessage(prompt))
-  const stream = await model.stream(message);
+  messages.push(new HumanMessage(prompt))
 
-  let responseText = ""
+  const response = await agent.invoke({
+        messages
+    })
 
-  for await (const chunks of stream) {
-    process.stdout.write(chunks.text);
+    
 
-    responseText += chunks.text
-
-  }
-
-  message.push(new AIMessage(responseText))
+  console.log(response)
 
    process.stdout.write("\n\n");
 }
