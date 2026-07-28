@@ -30,28 +30,28 @@ dotenv.config();
 import rl from "readline/promises";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { chunkArray } from "@langchain/core/utils/chunk_array";
-import * as z from 'zod' 
+import * as z from 'zod'
 import fs from 'fs/promises'
 
-import { HumanMessage, AIMessage , tool , ToolMessage, createAgent } from "langchain";
+import { HumanMessage, AIMessage, tool, ToolMessage, createAgent } from "langchain";
 import { da } from "zod/locales";
 
 const getMemoryTool = tool(
-  async ({}) =>{
-    const data = await fs.readFile("./profile.md" , "utf-8")
+  async ({ }) => {
+    const data = await fs.readFile("./profile.md", "utf-8")
     return data
   },
 
   {
-    name:"getMemory",
+    name: "getMemory",
     description: "Get the memory of the current user.",
     schema: z.object({})
   }
 )
 
 const readline = rl.createInterface({
-    input:process.stdin,
-    output:process.stdout
+  input: process.stdin,
+  output: process.stdout
 })
 
 
@@ -62,7 +62,7 @@ const model = new ChatMistralAI({
 
 const agent = createAgent({
   model,
-  tools:[getMemoryTool]
+  tools: [getMemoryTool]
 })
 
 const messages = []
@@ -73,12 +73,12 @@ while (true) {
   messages.push(new HumanMessage(prompt))
 
   const response = await agent.invoke({
-        messages
-    })
+    messages
+  })    
 
-    
+
 
   console.log(response)
 
-   process.stdout.write("\n\n");
+  process.stdout.write("\n\n");
 }
