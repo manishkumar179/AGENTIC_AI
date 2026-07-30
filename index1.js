@@ -1,7 +1,7 @@
 import { ChatMistralAI } from "@langchain/mistralai";
 import dotenv from "dotenv";
 import { read } from "fs";
-import { createAgent, HumanMessage, tool, ToolMessage } from "langchain";
+import { AIMessage, createAgent, HumanMessage, tool, ToolMessage } from "langchain";
 import { stdin } from "process";
 dotenv.config()
 import rl from 'readline/promises'
@@ -131,6 +131,10 @@ while (true) {
     const response = await agent.invoke({
         messages
     })
-    console.log(response)
+
+    const lastMessages = response.messages.at(-1);
+
+    messages.push(new AIMessage(lastMessages.text))
+    console.log(lastMessages.text)
 }
 

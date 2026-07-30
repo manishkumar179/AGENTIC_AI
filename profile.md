@@ -1,1 +1,1 @@
-I am manish kumar i am pursuing my btech from sirt and i am create one project that is AI interview agent
+Manish is a 3rd-year CSE student at SIRT, preparing for off-campus placements. He has started a new position at Sheryians. He is working on a video streaming application like Netflix with a video recommendation system using deep learning. His tech stack is MERN (MongoDB, Express.js, React, Node.js).
