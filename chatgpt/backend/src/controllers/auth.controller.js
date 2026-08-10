@@ -4,6 +4,7 @@ import UserModel from "../model/user.model.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { success } from 'zod';
+import { tr } from 'zod/locales';
 
 const cookieOption ={
     httpOnly: true,
@@ -74,7 +75,7 @@ export const registerController =async (req, res, next)=>{
 }
 
 
-// --------------------------2. Login Controller
+// --------------------------2. Login Controller------------------------------------
 export const loginController = async (req, res, next) =>{
     try {
         const {email, password} = req.body
@@ -116,3 +117,29 @@ export const loginController = async (req, res, next) =>{
         next(error)
     }
 }
+
+
+//---------------------------3. Logout Controller-------------------------------------
+
+export const logoutController = async (req, res, next)=>{
+    try {
+        res.clearCookie("token",{
+            ...cookieOption
+        })
+
+        return res.status(200).json({
+            success:true,
+            message:"Logout successfully"
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+
+
+
+
+
+
+
