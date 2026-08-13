@@ -137,8 +137,61 @@ export const logoutController = async (req, res, next)=>{
 }
 
 
+// ---------------------- /me Controller--------------------------------------
+
+// Your me controller assumes that authentication middleware has already 
+// verified the JWT and attached the user information to req.user.
+
+/*
+
+Client
+  │
+  │ GET /auth/me
+  │ Cookie: token=JWT
+  ▼
+Authentication Middleware
+  │
+  │ Verify JWT
+  │
+  │ Extract user ID
+  │
+  │ req.user = { id: "123..." }
+  ▼
+me Controller
+  │
+  │ User.findById(req.user.id)
+  ▼
+MongoDB
+  │
+  ▼
+User data
+  │
+  ▼
+Response
 
 
+*/
+
+
+export const me = async (req, res, next)=>{
+    try {
+        const user = await UserModel.findById(req.user.id).select("-password");
+
+        if(!user){
+            return res.status(404).json({
+                message:"User not found! "
+            })
+        }
+
+        return res.status(200).json({
+            success:true,
+            user
+        })
+
+    } catch (error) {
+        next(error);
+    }
+}
 
 
 
