@@ -68,6 +68,84 @@ export const handleMessage = async (req, res) =>{
 
     let conversation = null;
 
+    if (!conversationId) {
+            const title = await generateTitle({ message })
+    
+            conversation = await ConversationModel.create({
+                title,
+                user: req.user.id,
+            })
+        } else {
+            conversation = await ConversationModel.findOne({
+                _id: conversationId,
+                user: req.user.id,
+            })
+    
+            if (!conversation) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Conversation not found',
+                })
+            }
+        }
+    
+
+
+        const userMessage = await MessageModel.create({
+                conversation: conversation._id,
+                content: message,
+                author: 'user'
+            })
+        
+            const messages =  await MessageModel.find({conversation: conversation._id})
+        
+            const stream = await getStream({ messages, userId: user.id })
+        
+        
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+            res.setHeader('X-Conversation-Id', conversation._id.toString());
+            res.setHeader('X-Conversation-Title', conversation.title);
+            res.setHeader('Access-Control-Expose-Headers', 'X-Conversation-Id, X-Conversation-Title');
+        
+            let assistantReply = '';
+        
+            for await (const [ token, metadata ] of stream) {
+                const tokenText = token?.text || '';
+        
+                // if(token?.text instanceof(AIMessageChunk)){
+                assistantReply += tokenText;
+        
+                process.stdout.write(tokenText);
+        
+                const lines = tokenText.split('\n');
+                for (const line of lines) {
+                    res.write(`data: ${line}\n`);
+                }
+                res.write('\n');
+                // }
+        
+                
+            }
+
+
+             if (assistantReply.trim()) {
+                    await MessageModel.create({
+                        conversation: conversation._id,
+                        content: assistantReply,
+                        author: 'ai',
+                    });
+                }
+            
+                await ConversationModel.updateOne(
+                    { _id: conversation._id },
+                    { $set: { updatedAt: new Date() } },
+                );
+            
+                res.end();
+            
+
     
 }
 
