@@ -58,6 +58,57 @@ const updateContext = tool(
     }
 )
 
+async function getWeather({ city }) {
+    try {
+        const apiKey = process.env.OPENWEATHER_API_KEY || env.OPENWEATHER_API_KEY;
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&appid=${apiKey}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.cod !== 200) {
+            return `Error fetching weather for ${city}: ${data.message}`;
+        }
+        const temp = data.main.temp;
+        const description = data.weather[0].description;
+        const humidity = data.main.humidity;
+        return `The current weather in ${data.name}, ${data.sys.country} is ${temp}°C with ${description} and ${humidity}% humidity.`;
+    } catch (error) {
+        return `Failed to fetch weather data for ${city}: ${error.message}`;
+    }
+}
+
+const getWeatherTool = tool(
+    getWeather,
+    {
+        name: "getWeather",
+        description: "Fetch the real-time weather information for any city.",
+        schema: z.object({
+            city: z.string().describe("The name of the city to get weather for.")
+        }) 
+    }
+);
+
+
+const getWikipediaSummaryTool = tool(
+    async ({ topic }) => {
+        try {
+            const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`;
+            const res = await fetch(url);
+            if (!res.ok) return `No Wikipedia article found for "${topic}".`;
+            const data = await res.json();
+            return data.extract || "No summary available.";
+        } catch (error) {
+            return `Error fetching Wikipedia data: ${error.message}`;
+        }
+    },
+    {
+        name: "getWikipediaSummary",
+        description: "Search and retrieve a concise summary of any concept, entity, or topic from Wikipedia.",
+        schema: z.object({
+            topic: z.string().describe("The topic or concept to search for on Wikipedia")
+        })
+    }
+);
 
 
 
@@ -81,6 +132,8 @@ export async function generateTitle({ message }) {
 
 }
 
+
+
 // how ai agent behave and to pass the additional instruction
 
 
@@ -88,7 +141,7 @@ export async function getStream({ messages,userId }) {
 
     const agent = createAgent({
         model,
-        tools: [ readContext, updateContext ],
+        tools: [ getWikipediaSummaryTool, getWeatherTool, readContext, updateContext ],
         systemPrompt: `
 
         I am Alex and i am 3rd year student and i am trying to helping my juniors.
@@ -117,3 +170,10 @@ export async function getStream({ messages,userId }) {
 
     return stream
 }
+
+
+
+
+
+
+
