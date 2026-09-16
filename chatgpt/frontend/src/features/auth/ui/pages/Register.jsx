@@ -1,257 +1,100 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import useAuth from "../../hooks/useAuth";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import useAuth from '../../hooks/useAuth.js';
 
 const Register = () => {
-  const navigate = useNavigate();
-  const { register } = useAuth();
+    const [form, setForm] = useState({ name: '', email: '', password: '' });
+    const navigate = useNavigate();
+    const { loading, error, isAuthenticated, clearError, register } = useAuth();
 
-  const { loading, error } = useSelector((state) => state.auth);
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/chat', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+    useEffect(() => {
+        return () => {
+            clearError();
+        };
+    }, [clearError]);
 
-  const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+    };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        await register(form);
+    };
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    return (
+        <section className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950 p-8 shadow-2xl shadow-black/50">
+            <p className="text-sm uppercase tracking-[0.26em] text-zinc-300">Get started</p>
+            <h2 className="mt-2 text-3xl font-semibold text-zinc-100">Create account</h2>
+            <p className="mt-1 text-sm text-zinc-400">Use one secure session token via cookies.</p>
 
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
-  };
+            <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+                <label className="block">
+                    <span className="mb-1.5 block text-sm text-zinc-300">Name</span>
+                    <input
+                        required
+                        type="text"
+                        name="name"
+                        value={form.name}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-zinc-500"
+                        placeholder="Ankur"
+                    />
+                </label>
 
-  const validate = () => {
-    const newErrors = {};
+                <label className="block">
+                    <span className="mb-1.5 block text-sm text-zinc-300">Email</span>
+                    <input
+                        required
+                        type="email"
+                        name="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-zinc-500"
+                        placeholder="you@example.com"
+                    />
+                </label>
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
+                <label className="block">
+                    <span className="mb-1.5 block text-sm text-zinc-300">Password</span>
+                    <input
+                        required
+                        minLength={6}
+                        type="password"
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-zinc-500"
+                        placeholder="••••••••"
+                    />
+                </label>
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    ) {
-      newErrors.email = "Enter a valid email";
-    }
+                {error ? <p className="text-sm text-zinc-300">{error}</p> : null}
 
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
+                <button
+                    disabled={loading}
+                    type="submit"
+                    className="w-full rounded-xl bg-zinc-100 px-4 py-3 font-medium text-zinc-900 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                    {loading ? 'Creating account...' : 'Sign up'}
+                </button>
+            </form>
 
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (
-      formData.password !== formData.confirmPassword
-    ) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validate()) return;
-
-    const result = await register({
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      password: formData.password,
-    });
-
-    if (result.success) {
-      navigate("/chat");
-    }
-  };
-
-  return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d0d0f] p-5 sm:p-7 shadow-2xl">
-
-        {/* Header */}
-        <div className="mb-5">
-          <p className="mb-1.5 text-xs font-medium tracking-[0.25em] text-gray-500">
-            GET STARTED
-          </p>
-
-          <h1 className="text-3xl font-semibold text-white">
-            Create account
-          </h1>
-
-          <p className="mt-1 text-sm text-gray-400">
-            Create your AI workspace account.
-          </p>
-        </div>
-
-        {/* Backend Error */}
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-
-          {/* Name */}
-          <div>
-            <label className="mb-1 block text-sm text-gray-200">
-              Name
-            </label>
-
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Your name"
-              className={`w-full rounded-lg border ${
-                errors.name
-                  ? "border-red-500"
-                  : "border-white/10"
-              } bg-[#191a1d] px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-white/30`}
-            />
-
-            {errors.name && (
-              <p className="mt-1 text-xs text-red-400">
-                {errors.name}
-              </p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="mb-1 block text-sm text-gray-200">
-              Email
-            </label>
-
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-              className={`w-full rounded-lg border ${
-                errors.email
-                  ? "border-red-500"
-                  : "border-white/10"
-              } bg-[#191a1d] px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-white/30`}
-            />
-
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-400">
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="mb-1 block text-sm text-gray-200">
-              Password
-            </label>
-
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Minimum 6 characters"
-                className={`w-full rounded-lg border ${
-                  errors.password
-                    ? "border-red-500"
-                    : "border-white/10"
-                } bg-[#191a1d] px-4 py-2.5 pr-16 text-sm text-white outline-none placeholder:text-gray-600 focus:border-white/30`}
-              />
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowPassword((prev) => !prev)
-                }
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-400">
-                {errors.password}
-              </p>
-            )}
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label className="mb-1 block text-sm text-gray-200">
-              Confirm Password
-            </label>
-
-            <input
-              type={showPassword ? "text" : "password"}
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm your password"
-              className={`w-full rounded-lg border ${
-                errors.confirmPassword
-                  ? "border-red-500"
-                  : "border-white/10"
-              } bg-[#191a1d] px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 focus:border-white/30`}
-            />
-
-            {errors.confirmPassword && (
-              <p className="mt-1 text-xs text-red-400">
-                {errors.confirmPassword}
-              </p>
-            )}
-          </div>
-
-          {/* Register Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-1 w-full rounded-lg bg-white py-2.5 text-sm font-medium text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Creating account..." : "Create account"}
-          </button>
-
-        </form>
-
-        {/* Login */}
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            className="font-medium text-white hover:underline"
-          >
-            Log in
-          </Link>
-        </p>
-
-      </div>
-    </div>
-  );
+            <p className="mt-5 text-sm text-zinc-400">
+                Already have an account?{' '}
+                <Link className="text-zinc-200 hover:text-zinc-100" to="/login">
+                    Log in
+                </Link>
+            </p>
+        </section>
+    );
 };
 
-export default Register;
+export default Register

@@ -1,15 +1,14 @@
-import dotenv from 'dotenv'
-dotenv.config()
 import { ChatMistralAI } from "@langchain/mistralai"
 import { createAgent, toolStrategy, HumanMessage, AIMessage,tool } from "langchain"
 import * as z from "zod"
-import Context from '../model/context.model'
+import env from "../config/env.js";
+import Context from "../model/context.model.js";
 
 
 
 const model = new ChatMistralAI({
-    model: "mistral-medium-latest",
-    apiKey: process.env.MISTRALAI_API_KEY,
+    model: "open-mistral-7b",
+    apiKey: env.MISTRALAI_API_KEY,
 })
 
 

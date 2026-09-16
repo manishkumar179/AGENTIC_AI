@@ -1,8 +1,9 @@
-import { RouterProvider } from "react-router-dom";
-import router from "./router/AppRoutes";
+function App() {
+  return (
+    <div className="p-4 text-sm text-zinc-300">
+      Router-driven app initialized.
+    </div>
+  )
+}
 
-const App = () => {
-  return <RouterProvider router={router} />;
-};
-
-export default App;
+export default App

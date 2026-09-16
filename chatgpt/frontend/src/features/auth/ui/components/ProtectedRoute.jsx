@@ -1,16 +1,23 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { Navigate, useLocation } from 'react-router';
+import useAuth from '../../hooks/useAuth.js';
 
-const ProtectedRoute = () => {
-  const { isAuthenticated } = useSelector(
-    (state) => state.auth
-  );
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, isAuthChecked } = useAuth();
+  const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthChecked) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-zinc-900/70 px-4 py-2 text-sm text-zinc-300">
+        Restoring session...
+      </div>
+    );
   }
 
-  return <Outlet />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  return children;
 };
 
 export default ProtectedRoute;

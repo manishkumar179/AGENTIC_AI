@@ -1,44 +1,27 @@
-import dotenv from 'dotenv'
-dotenv.config()
 import jwt from 'jsonwebtoken';
-import UserModel from '../model/user.model.js';
+import env from '../config/env.js';
 
 
-const authMiddleware = async (req, res, next)=>{
-    try {
-        const token = req.cookies.token;
-        if(!token){
-            return res.status(401).json({
-                message:"No authorized! Please login "
-            })
-        }
+const protect = (req, res, next) => {
+    const token = req.cookies[ env.COOKIE_NAME ];
 
-        let decode = jwt.verify(token, process.env.JWT_SECRET);
-        if(!decode){
-            return res.status(401).json({
-                message:"Unauthorized user"
-            })
-        }
-
-        const findUser = await UserModel.findById(decode.id);
-        
-        if(!user){
-            return res.status(404).json({
-                message:"user not found"
-            })
-        }
-
-        req.user = user;
-
-        next()
-
-    } catch (error) {
-        return res.status(500).json({
-            message:"Session expired! Please login again."
-        })
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'Not authorized. Please login.',
+        });
     }
-}
 
-export default authMiddleware;
+    try {
+        const decoded = jwt.verify(token, env.JWT_SECRET);
+        req.user = { id: decoded.id };
+        next();
+    } catch {
+        return res.status(401).json({
+            success: false,
+            message: 'Session expired. Please login again.',
+        });
+    }
+};
 
-
+export default protect;

@@ -1,123 +1,45 @@
-import { useCallback } from "react";
-import { useDispatch } from "react-redux";
-
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  authStart,
-  loginSuccess,
-  registerSuccess,
-  authFailure,
-  setUser,
-  logoutSuccess,
-} from "../state/authSlice";
+    clearAuthError,
+    fetchMe,
+    loginUser,
+    logoutUser,
+    registerUser,
+} from '../state/authSlice.js';
 
-import {
-  loginApi,
-  registerApi,
-  logoutApi,
-  meApi,
-} from "../api/authService";
-
+/**
+ * Auth feature hook that exposes state and auth actions to UI layer.
+ *
+ * @returns {{
+ *  user: any,
+ *  loading: boolean,
+ *  error: string | null,
+ *  isAuthenticated: boolean,
+ *  register: (payload: {name: string, email: string, password: string}) => Promise<any>,
+ *  login: (payload: {email: string, password: string}) => Promise<any>,
+ *  logout: () => Promise<any>,
+ *  me: () => Promise<any>,
+ *  clearError: () => {type: string}
+ * }}
+ */
 const useAuth = () => {
-  const dispatch = useDispatch();
+    const dispatch = useDispatch();
+    const authState = useSelector((state) => state.auth);
 
-  const login = useCallback(async (data) => {
-    try {
-      dispatch(authStart());
+    const register = (payload) => dispatch(registerUser(payload));
+    const login = (payload) => dispatch(loginUser(payload));
+    const logout = () => dispatch(logoutUser());
+    const me = () => dispatch(fetchMe());
+    const clearError = () => dispatch(clearAuthError());
 
-      const response = await loginApi(data);
-
-      dispatch(loginSuccess(response.user));
-
-      return {
-        success: true,
-        user: response.user,
-      };
-    } catch (error) {
-      const message =
-        error.response?.data?.message || "Login failed";
-
-      dispatch(authFailure(message));
-
-      return {
-        success: false,
-        message,
-      };
-    }
-  }, [dispatch]);
-
-  const register = useCallback(async (data) => {
-    try {
-      dispatch(authStart());
-
-      const response = await registerApi(data);
-
-      dispatch(registerSuccess(response.user));
-
-      return {
-        success: true,
-        user: response.user,
-      };
-    } catch (error) {
-      const message =
-        error.response?.data?.message ||
-        "Registration failed";
-
-      dispatch(authFailure(message));
-
-      return {
-        success: false,
-        message,
-      };
-    }
-  }, [dispatch]);
-
-  const logout = useCallback(async () => {
-    try {
-      dispatch(authStart());
-
-      await logoutApi();
-
-      dispatch(logoutSuccess());
-
-      return { success: true };
-    } catch (error) {
-      const message =
-        error.response?.data?.message || "Logout failed";
-
-      dispatch(authFailure(message));
-
-      return {
-        success: false,
-        message,
-      };
-    }
-  }, [dispatch]);
-
-  const me = useCallback(async () => {
-    try {
-      const response = await meApi();
-
-      dispatch(setUser(response.user));
-
-      return {
-        success: true,
-        user: response.user,
-      };
-    } catch {
-      dispatch(setUser(null));
-
-      return {
-        success: false,
-      };
-    }
-  }, [dispatch]);
-
-  return {
-    login,
-    register,
-    logout,
-    me,
-  };
+    return {
+        ...authState,
+        register,
+        login,
+        logout,
+        me,
+        clearError,
+    };
 };
 
 export default useAuth;
